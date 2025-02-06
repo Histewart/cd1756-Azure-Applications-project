@@ -23,3 +23,7 @@ Workflow: Personally the workflow of app service is easier for me because it all
 ### Appropriate Solution
 For this case, I think it would be best to use Azure App Service.
 I think this for a variety of reasons. I feel that it would allow for the focus to be on developing the application rather than managing the infrasture as well as ensure reliable performance. Of course there is the possibility of over scaling and accidentally choosing too big of a plan, but I think if dilligently setting up the app service this could be avoided. If the app were to exist this small forever, it may be best to choose the VM because then it could be tiny and upkeep would not really be needed. But, I'm pretending like this could be lighly built out.
+
+
+### App Changes that Would Change my Decision
+If the app requirements changed significantly, such as needing more control over the infrastructure or requiring specific configurations that are not supported by Azure App Service, it might be necessary to reconsider using Azure Virtual Machines. For example if there were more complex workflows, increased customization needs, security requirement, or higher resource demand.
