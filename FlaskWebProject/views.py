@@ -25,7 +25,7 @@ def home():
 
 @app.route('/new_post', methods=['GET', 'POST'])
 @login_required
-def_post():
+def new_post():
     form = PostForm(request.form)
     if form.validate_on_submit():
         post = Post()
@@ -37,6 +37,7 @@ def_post():
         imageSource=imageSourceUrl,
         form=form
     )
+
 
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -61,11 +62,9 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
-            app.logger.warning('Unsuccessful login attempt for username: %s', form.username.data)
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
-        app.logger.info('User %s logged in successfully', form.username.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('home')
@@ -79,16 +78,16 @@ def authorized():
     if request.args.get('state') != session.get("state"):
         return redirect(url_for("home"))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
-        app.logger.error('Authentication error: %s', request.args.get('error'))
         return render_template("auth_error.html", result=request.args)
     if request.args.get('code'):
         cache = _load_cache()
-        # Acquire a token from a built msal app, along with the appropriate redirect URI
+        # TODO: Acquire a token from a built msal app, along with the appropriate redirect URI
         result = None
         if "error" in result:
-            app.logger.error('Token acquisition error: %s', result.get('error'))
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
+        # Note: In a real app, we'd use the 'name' property from session["user"] below
+        # Here, we'll use the admin username for anyone who is authenticated by MS
         user = User.query.filter_by(username="admin").first()
         login_user(user)
         _save_cache(cache)
@@ -97,9 +96,10 @@ def authorized():
 @app.route('/logout')
 def logout():
     logout_user()
-    Login
-        app.logger.info('User %s logged out', session["user"].get("name"))
+    if session.get("user"): # Used MS Login
+        # Wipe out user and its token cache from session
         session.clear()
+        # Also logout from your tenant's web session
         return redirect(
             Config.AUTHORITY + "/oauth2/v2.0/logout" +
             "?post_logout_redirect_uri=" + url_for("login", _external=True))
@@ -107,27 +107,18 @@ def logout():
     return redirect(url_for('login'))
 
 def _load_cache():
-    # Load the cache from `msal`, if it exists
-    cache = msal.SerializableTokenCache()
-    if session.get('token_cache'):
-        cache.deserialize(session['token_cache'])
+    # TODO: Load the cache from `msal`, if it exists
+    cache = None
     return cache
 
 def _save_cache(cache):
-    # Save the cache, if it has changed
-    if cache.has_state_changed:
-        session['token_cache'] = cache.serialize()
+    # TODO: Save the cache, if it has changed
+    pass
 
 def _build_msal_app(cache=None, authority=None):
-    # Return a ConfidentialClientApplication
-    return msal.ConfidentialClientApplication(
-        Config.CLIENT_ID, authority=authority or Config.AUTHORITY,
-        client_credential=Config.CLIENT_SECRET, token_cache=cache)
+    # TODO: Return a ConfidentialClientApplication
+    return None
 
 def _build_auth_url(authority=None, scopes=None, state=None):
-    # Return the full Auth Request URL with appropriate Redirect URI
-    msal_app = _build_msal_app(authority=authority)
-    return msal_app.get_authorization_request_url(
-        scopes or [],
-        state=state,
-        redirect_uri=url_for('authorized', _external=True))
+    # TODO: Return the full Auth Request URL with appropriate Redirect URI
+    return None
