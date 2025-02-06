@@ -52,7 +52,7 @@ def post(id):
         post.save_changes(form, request.files['image_path'], current_user.id)
         return redirect(url_for('home'))
     return render_template(
-        'post.html',
+        '.html',
         title='Edit Post',
         imageSource=imageSourceUrl,
         form=form
@@ -67,7 +67,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
-            return redirect(url_for('login'))
+           (url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -94,10 +94,10 @@ def authorized():
             return render_template("auth_error.html", result=result)
         session["user"] = result.get("id_token_claims")
         user = User.query.filter_by(username="admin").first()
-       save_cache(cache)
+        save_cache(cache)
     return redirect(url_for('home'))
 
-@app.route('/logout')
+.route('/logout')
 def logout():
     logout_user()
     if session.get("user"): # Used MS Login
