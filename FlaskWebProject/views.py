@@ -1,3 +1,7 @@
+"""
+Routes and views for the flask application.
+"""
+
 from datetime import datetime
 from flask import render_template, flash, redirect, request, session, url_for
 from werkzeug.urls import url_parse
@@ -14,7 +18,8 @@ imageSourceUrl = 'https://'+ app.config['BLOB_ACCOUNT']  + '.blob.core.windows.n
 @app.route('/')
 @app.route('/home')
 @login_required
-def    user = User.query.filter_by(username=current_user.username).first_or_404()
+def home():
+    user = User.query.filter_by(username=current_user.username).first_or_404()
     posts = Post.query.all()
     return render_template(
         'index.html',
@@ -37,6 +42,7 @@ def new_post():
         form=form
     )
 
+
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def post(id):
@@ -46,7 +52,7 @@ def post(id):
         post.save_changes(form, request.files['image_path'], current_user.id)
         return redirect(url_for('home'))
     return render_template(
-        '.html',
+        'post.html',
         title='Edit Post',
         imageSource=imageSourceUrl,
         form=form
@@ -60,11 +66,9 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
-            app.logger.warning(f'Unsuccessful login attempt for username: {form.username.data}')
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
-        app.logger.info(f'Successful login for username: {form.username.data}')
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('home')
@@ -79,7 +83,7 @@ def authorized():
         return redirect(url_for('home'))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
         return render_template('auth_error.html', result=request.args)
-    if request.args.get('code'):
+     if request.args.get('code'):
         cache = _load_cache()
         result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
             request.args['code'],
