@@ -79,21 +79,20 @@ def login():
 
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
-    if request.args.get('state') != session.get("state"):
-        return redirect(url_for("home"))  # No-OP. Goes back to Index page
+    if request.args.get('state') != session.get('state'):
+        return redirect(url_for('home'))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
-        return render_template("auth_error.html", result=request.args)
+        return render_template('auth_error.html', result=request.args)
      if request.args.get('code'):
         cache = _load_cache()
-        msal_app = _build_msal_app(cache=cache)
-        result = msal_app.acquire_token_by_authorization_code(
+        result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
             request.args['code'],
             scopes=Config.SCOPE,
             redirect_uri=url_for('authorized', _external=True, _scheme='https'))
         if "error" in result:
-            return render_template("auth_error.html", result=result)
-        session["user"] = result.get("id_token_claims")
-        user = User.query.filter_by(username="admin").first()
+            return render_template('auth_error.html', result=result)
+        session['user'] = result.get('id_token_claims')
+        user = User.query.filter_by(username='admin').first()
         login_user(user)
         _save_cache(cache)
     return redirect(url_for('home'))
@@ -107,7 +106,7 @@ def logout():
         # Also logout from your tenant's web session
         return redirect(
             Config.AUTHORITY + "/oauth2/v2.0/logout" +
-            "?post_logout_redirect_uri=" + url_for("login", _external=True, _scheme='https'))
+            "?post_logout_redirect_uri=" + url_for("login", _external=True))
 
     return redirect(url_for('login'))
 
