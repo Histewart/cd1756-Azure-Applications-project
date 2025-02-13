@@ -11,10 +11,10 @@ from flask_session import Session
 app = Flask(__name__)
 app.config.from_object(Config)
 # Set up logging
-app.logger.setLevel(logging.WARNING)
-streamHandler = logging.StreamHandler()
-streamHandler.setLevel(logging.WARNING)
-app.logger.addHandler(streamHandler)
+# app.logger.setLevel(logging.WARNING)
+# streamHandler = logging.StreamHandler()
+# streamHandler.setLevel(logging.WARNING)
+# app.logger.addHandler(streamHandler)
   
 Session(app)
 db = SQLAlchemy(app)
