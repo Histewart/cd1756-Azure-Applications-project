@@ -1,7 +1,3 @@
-"""
-Routes and views for the flask application.
-"""
-
 from datetime import datetime
 from flask import render_template, flash, redirect, request, session, url_for
 from werkzeug.urls import url_parse
@@ -18,8 +14,7 @@ imageSourceUrl = 'https://'+ app.config['BLOB_ACCOUNT']  + '.blob.core.windows.n
 @app.route('/')
 @app.route('/home')
 @login_required
-def home():
-    user = User.query.filter_by(username=current_user.username).first_or_404()
+def    user = User.query.filter_by(username=current_user.username).first_or_404()
     posts = Post.query.all()
     return render_template(
         'index.html',
@@ -42,7 +37,6 @@ def new_post():
         form=form
     )
 
-
 @app.route('/post/<int:id>', methods=['GET', 'POST'])
 @login_required
 def post(id):
@@ -52,7 +46,7 @@ def post(id):
         post.save_changes(form, request.files['image_path'], current_user.id)
         return redirect(url_for('home'))
     return render_template(
-        'post.html',
+        '.html',
         title='Edit Post',
         imageSource=imageSourceUrl,
         form=form
@@ -66,9 +60,11 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
+            app.logger.warning(f'Unsuccessful login attempt for username: {form.username.data}')
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
+        app.logger.info(f'Successful login for username: {form.username.data}')
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('home')
@@ -79,10 +75,10 @@ def login():
 
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
-    if request.args.get('state') != session.get("state"):
-        return redirect(url_for("home"))  # No-OP. Goes back to Index page
+    if request.args.get('state') != session.get('state'):
+        return redirect(url_for('home'))  # No-OP. Goes back to Index page
     if "error" in request.args:  # Authentication/Authorization failure
-        return render_template("auth_error.html", result=request.args)
+        return render_template('auth_error.html', result=request.args)
     if request.args.get('code'):
         cache = _load_cache()
         result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
@@ -90,11 +86,9 @@ def authorized():
             scopes=Config.SCOPE,
             redirect_uri=url_for('authorized', _external=True, _scheme='https'))
         if "error" in result:
-            return render_template("auth_error.html", result=result)
-        session["user"] = result.get("id_token_claims")
-        # Note: In a real app, we'd use the 'name' property from session["user"] below
-        # Here, we'll use the admin username for anyone who is authenticated by MS
-        user = User.query.filter_by(username="admin").first()
+            return render_template('auth_error.html', result=result)
+        session['user'] = result.get('id_token_claims')
+        user = User.query.filter_by(username='admin').first()
         login_user(user)
         _save_cache(cache)
     return redirect(url_for('home'))
@@ -113,23 +107,23 @@ def logout():
     return redirect(url_for('login'))
 
 def _load_cache():
-    # TODO: Load the cache from `msal`, if it exists
+    # Load the cache from `msal`, if it exists
     cache = msal.SerializableTokenCache()
     if session.get('token_cache'):
         cache.deserialize(session['token_cache'])
     return cache
 
 def _save_cache(cache):
-    # TODO: Save the cache, if it has changed
+    # Save the cache, if it has changed
     if cache.has_state_changed:
         session['token_cache'] = cache.serialize()
 
 def _build_msal_app(cache=None, authority=None):
-    # TODO: Return a ConfidentialClientApplication
+    # Return a ConfidentialClientApplication
     return msal.ConfidentialClientApplication(
         Config.CLIENT_ID, authority=authority or Config.AUTHORITY,
         client_credential=Config.CLIENT_SECRET, token_cache=cache)
 
 def _build_auth_url(authority=None, scopes=None, state=None):
-    # TODO: Return the full Auth Request URL with appropriate Redirect URI
+    # Return the full Auth Request URL with appropriate Redirect URI
     return _build_msal_app(authority=authority).get_authorization_request_url(scopes or [], state=state or str(uuid.uuid4()), redirect_uri=url_for('authorized', _external=True, _scheme='https'))
