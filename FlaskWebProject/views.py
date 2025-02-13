@@ -67,7 +67,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
-           (url_for('login'))
+            return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -96,7 +96,7 @@ def authorized():
         save_cache(cache)
     return redirect(url_for('home'))
 
-.route('/logout')
+@app.route('/logout')
 def logout():
     logout_user()
     if session.get("user"): # Used MS Login
@@ -105,7 +105,7 @@ def logout():
         # Also logout from your tenant's web session
         return redirect(
             Config.AUTHORITY + "/oauth2/v2.0/logout" +
-            "?post_logout_redirect_uri=" + url_for("login", _external=True))
+            "?post_logout_redirect_uri=" + url_for("login", _external=True, _scheme='https'))
 
     return redirect(url_for('login'))
 
@@ -130,6 +130,6 @@ def _build_msal_app(cache=None, authority=None):
 def _build_auth_url(authority=None, scopes=None, state=None):
     # Return the full Auth Request URL with appropriate Redirect URI
     return _build_msal_app(authority=authority).get_authorization_request_url(
-        scopes or [],
-        state=state or str(uuid.uuid4()),
+        scopes,
+        state=state,
         redirect_uri=url_for('authorized', _external=True, _scheme='https'))
